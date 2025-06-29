@@ -76,10 +76,10 @@ class TestIrisModelTrainer:
         """Create sample iris data for testing."""
         np.random.seed(42)
         data = {
-            'sepal_length': np.random.normal(5.8, 0.8, 150),
-            'sepal_width': np.random.normal(3.0, 0.4, 150),
-            'petal_length': np.random.normal(3.8, 1.8, 150),
-            'petal_width': np.random.normal(1.2, 0.8, 150),
+            'sepal_length': np.random.uniform(4.3, 7.9, 150),
+            'sepal_width': np.random.uniform(2.0, 4.4, 150),
+            'petal_length': np.random.uniform(1.0, 6.9, 150),
+            'petal_width': np.random.uniform(0.1, 2.5, 150),
             'species': ['setosa'] * 50 + ['versicolor'] * 50 + ['virginica'] * 50
         }
         return pd.DataFrame(data)
@@ -297,10 +297,10 @@ class TestIrisPipeline:
         """Create sample data file."""
         np.random.seed(42)
         data = {
-            'sepal_length': np.random.normal(5.8, 0.8, 150),
-            'sepal_width': np.random.normal(3.0, 0.4, 150),
-            'petal_length': np.random.normal(3.8, 1.8, 150),
-            'petal_width': np.random.normal(1.2, 0.8, 150),
+            'sepal_length': np.random.uniform(4.3, 7.9, 150),
+            'sepal_width': np.random.uniform(2.0, 4.4, 150),
+            'petal_length': np.random.uniform(1.0, 6.9, 150),
+            'petal_width': np.random.uniform(0.1, 2.5, 150),
             'species': ['setosa'] * 50 + ['versicolor'] * 50 + ['virginica'] * 50
         }
         df = pd.DataFrame(data)
@@ -391,10 +391,10 @@ class TestDataValidation:
         
         # Generate data with known properties
         data = pd.DataFrame({
-            'sepal_length': np.random.normal(5.8, 0.8, 150),
-            'sepal_width': np.random.normal(3.0, 0.4, 150),
-            'petal_length': np.random.normal(3.8, 1.8, 150),
-            'petal_width': np.random.normal(1.2, 0.8, 150),
+            'sepal_length': np.random.uniform(4.3, 7.9, 150),
+            'sepal_width': np.random.uniform(2.0, 4.4, 150),
+            'petal_length': np.random.uniform(1.0, 6.9, 150),
+            'petal_width': np.random.uniform(0.1, 2.5, 150),
             'species': ['setosa'] * 50 + ['versicolor'] * 50 + ['virginica'] * 50
         })
         
@@ -411,71 +411,69 @@ class TestDataValidation:
 
 
 class TestModelPerformance:
-    """Test cases for model performance validation."""
+    """Test model performance metrics and behavior."""
     
     @pytest.fixture
     def trained_model_and_data(self):
-        """Create a trained model with test data."""
-        np.random.seed(42)
-        
-        # Generate synthetic but realistic iris data
-        data = {
-            'sepal_length': np.random.normal(5.8, 0.8, 150),
-            'sepal_width': np.random.normal(3.0, 0.4, 150),
-            'petal_length': np.random.normal(3.8, 1.8, 150),
-            'petal_width': np.random.normal(1.2, 0.8, 150),
-            'species': ['setosa'] * 50 + ['versicolor'] * 50 + ['virginica'] * 50
-        }
-        df = pd.DataFrame(data)
-        
-        # Train model
-        config = Config()
+        """Fixture to train a model and return it along with test data."""
+        config = Config(data_path='data/iris.csv', test_size=0.2, random_state=42)
         trainer = IrisModelTrainer(config)
-        X_train, y_train, X_test, y_test = trainer.prepare_data(df)
+        
+        # Load real data
+        data = trainer.load_data()
+        
+        # Prepare and train the model
+        X_train, y_train, X_test, y_test = trainer.prepare_data(data)
         trainer.train_model(X_train, y_train)
+        
+        # Evaluate to get metrics
         metrics = trainer.evaluate_model(X_test, y_test)
         
-        return trainer.model, X_test, y_test, metrics
-    
+        return trainer, X_test, y_test, metrics
+
     def test_model_accuracy_threshold(self, trained_model_and_data):
-        """Test that model meets minimum accuracy threshold."""
-        model, X_test, y_test, metrics = trained_model_and_data
-        
-        # Model should achieve at least 70% accuracy on iris dataset
-        assert metrics['accuracy'] >= 0.7, f"Model accuracy {metrics['accuracy']:.3f} below threshold"
-    
+        """Test if model accuracy is above the minimum threshold."""
+        _, _, _, metrics = trained_model_and_data
+        assert metrics['accuracy'] >= 0.9, f"Model accuracy {metrics['accuracy']:.3f} below threshold"
+
     def test_model_predictions_format(self, trained_model_and_data):
-        """Test that model predictions are in the correct format."""
-        model, X_test, y_test, metrics = trained_model_and_data
+        """Test the format and type of model predictions."""
+        trainer, X_test, _, _ = trained_model_and_data
         
-        predictions = model.predict(X_test)
+        # Make predictions
+        predictions = trainer.model.predict(X_test)
         
-        # Check prediction format
-        assert len(predictions) == len(y_test)
-        assert all(pred in ['setosa', 'versicolor', 'virginica'] for pred in predictions)
-    
+        # Check basic properties
+        assert isinstance(predictions, np.ndarray)
+        assert predictions.ndim == 1
+        assert len(predictions) == len(X_test)
+        
+        # Check that predictions are valid species
+        valid_species = {'setosa', 'versicolor', 'virginica'}
+        assert set(predictions).issubset(valid_species)
+
     def test_model_consistency(self, trained_model_and_data):
-        """Test that model predictions are consistent."""
-        model, X_test, y_test, metrics = trained_model_and_data
+        """Test that the model produces consistent predictions for the same input."""
+        trainer, X_test, _, _ = trained_model_and_data
         
-        # Same input should give same output
-        sample_input = X_test.iloc[[0]]
-        pred1 = model.predict(sample_input)[0]
-        pred2 = model.predict(sample_input)[0]
+        # Predictions should be identical for the same input data
+        predictions1 = trainer.model.predict(X_test)
+        predictions2 = trainer.model.predict(X_test)
         
-        assert pred1 == pred2, "Model predictions are not consistent"
-    
+        assert np.array_equal(predictions1, predictions2)
+
     def test_model_prediction_probabilities(self, trained_model_and_data):
-        """Test model prediction probabilities."""
-        model, X_test, y_test, metrics = trained_model_and_data
+        """Test the format and range of prediction probabilities."""
+        trainer, X_test, _, _ = trained_model_and_data
         
         # Get prediction probabilities
-        probabilities = model.predict_proba(X_test)
+        probabilities = trainer.model.predict_proba(X_test)
         
-        # Check shape and properties
-        assert probabilities.shape == (len(X_test), 3)  # 3 classes
-        assert np.allclose(probabilities.sum(axis=1), 1.0)  # Probabilities sum to 1
-        assert np.all(probabilities >= 0)  # All probabilities non-negative
+        # Check basic properties
+        assert isinstance(probabilities, np.ndarray)
+        assert probabilities.shape == (len(X_test), 3)
+        assert np.allclose(np.sum(probabilities, axis=1), 1.0)
+        assert np.all((probabilities >= 0) & (probabilities <= 1))
 
 
 class TestIntegrationScenarios:
@@ -486,10 +484,10 @@ class TestIntegrationScenarios:
         # Create test data
         np.random.seed(42)
         data = {
-            'sepal_length': np.random.normal(5.8, 0.8, 150),
-            'sepal_width': np.random.normal(3.0, 0.4, 150),
-            'petal_length': np.random.normal(3.8, 1.8, 150),
-            'petal_width': np.random.normal(1.2, 0.8, 150),
+            'sepal_length': np.random.uniform(4.3, 7.9, 150),
+            'sepal_width': np.random.uniform(2.0, 4.4, 150),
+            'petal_length': np.random.uniform(1.0, 6.9, 150),
+            'petal_width': np.random.uniform(0.1, 2.5, 150),
             'species': ['setosa'] * 50 + ['versicolor'] * 50 + ['virginica'] * 50
         }
         df = pd.DataFrame(data)
@@ -530,10 +528,10 @@ class TestIntegrationScenarios:
         # Create identical datasets
         np.random.seed(42)
         data = {
-            'sepal_length': np.random.normal(5.8, 0.8, 100),
-            'sepal_width': np.random.normal(3.0, 0.4, 100),
-            'petal_length': np.random.normal(3.8, 1.8, 100),
-            'petal_width': np.random.normal(1.2, 0.8, 100),
+            'sepal_length': np.random.uniform(4.3, 7.9, 100),
+            'sepal_width': np.random.uniform(2.0, 4.4, 100),
+            'petal_length': np.random.uniform(1.0, 6.9, 100),
+            'petal_width': np.random.uniform(0.1, 2.5, 100),
             'species': ['setosa'] * 33 + ['versicolor'] * 33 + ['virginica'] * 34
         }
         df = pd.DataFrame(data)
