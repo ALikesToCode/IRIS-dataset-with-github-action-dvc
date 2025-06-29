@@ -58,7 +58,7 @@ jobs:
         # Run tests and training, but allow the workflow to continue on failure
         # to ensure the report is always generated.
         pytest test_pipeline.py -v --cov=. --cov-report=xml --junit-xml=test-results.xml || echo "Pytest execution failed"
-        python -c "from main import IrisPipeline; IrisPipeline().run_training_pipeline()" || echo "Training script execution failed"
+        python main.py || echo "Training script execution failed"
 
     - name: Generate CML Report
       id: cml_report

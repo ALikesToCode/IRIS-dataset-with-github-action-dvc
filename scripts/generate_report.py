@@ -4,11 +4,12 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 import pandas as pd
 import seaborn as sns
+import matplotlib
 import matplotlib.pyplot as plt
+import sklearn
 from sklearn.metrics import confusion_matrix
 import joblib
 import sys
-import sklearn
 
 def generate_report():
     """Generates a professional, data-rich CML report with visualizations."""

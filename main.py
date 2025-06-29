@@ -366,31 +366,16 @@ class IrisPipeline:
 
 
 def main():
-    """Main entry point."""
+    """Main function to run the full pipeline."""
     try:
-        # Load configuration
-        config = Config.from_env()
-        
-        # Create and run pipeline
-        pipeline = IrisPipeline(config)
-        success = pipeline.run_full_pipeline()
-        
-        if success:
-            logger.info("Pipeline execution completed successfully!")
-            sys.exit(0)
-        else:
-            logger.error("Pipeline execution failed!")
-            sys.exit(1)
-            
-    except KeyboardInterrupt:
-        logger.info("Pipeline execution interrupted by user")
-        sys.exit(130)
+        pipeline = IrisPipeline()
+        pipeline.run_full_pipeline()
     except Exception as e:
-        logger.error(f"Unexpected error: {e}")
+        logger.error(f"Pipeline execution failed: {e}")
         sys.exit(1)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
 
 
