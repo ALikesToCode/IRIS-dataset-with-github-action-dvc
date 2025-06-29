@@ -52,95 +52,129 @@ jobs:
     - name: Install CML
       uses: iterative/setup-cml@v1
       
-    - name: Run unit tests with coverage
+    - name: Run Tests and Validation
+      id: run_scripts
       run: |
-        echo "# ML Pipeline Test Report" > report.md
-        echo "" >> report.md
-        echo "Generated on: $(date)" >> report.md
-        echo "" >> report.md
-        
-        # Run tests
-        echo "## Unit Test Results" >> report.md
-        echo "" >> report.md
-        
-        if python -m pytest test_pipeline.py -v --cov=. --cov-report=term --cov-report=xml --junit-xml=test-results.xml --tb=short; then
-          echo "✅ **All tests passed successfully!**" >> report.md
-        else
-          echo "❌ **Some tests failed. See logs for details.**" >> report.md
-        fi
-        echo "" >> report.md
-        
-    - name: Run model training validation
+        # Run tests and training, but allow the workflow to continue on failure
+        # to ensure the report is always generated.
+        pytest test_pipeline.py -v --cov=. --cov-report=xml --junit-xml=test-results.xml || echo "Pytest execution failed"
+        python -c "from main import Config, IrisPipeline; config = Config(data_path='data/iris.csv'); pipeline = IrisPipeline(config); pipeline.run_training_pipeline()" || echo "Training script execution failed"
+
+    - name: Generate CML Report
+      id: cml_report
+      env:
+        GH_WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
       run: |
-        echo "## Model Training Validation" >> report.md
-        echo "" >> report.md
+        python -c "
+        import os
+        import json
+        import xml.etree.ElementTree as ET
+        from datetime import datetime
+        import pandas as pd
+
+        report_parts = []
+
+        # --- Header ---
+        report_parts.append('# 🚀 ML Pipeline Report')
+        report_parts.append(f'A summary of the test, validation, and performance results. [View Workflow Run]({os.environ[\"GH_WORKFLOW_URL\"]})')
+        report_parts.append('---')
+
+        # --- Metrics Extraction ---
+        tests_passed_str, coverage_str, accuracy_str = 'N/A', 'N/A', 'N/A'
+        tests_status, cov_status, acc_status = '⚠️', '⚠️', '⚠️'
+        total_tests, failures, errors = 0, 0, 0
+
+        try:
+            tree = ET.parse('test-results.xml')
+            root = tree.getroot()
+            suite = root.find('testsuite') if root.find('testsuite') is not None else root
+            total_tests = int(suite.get('tests', 0))
+            failures = int(suite.get('failures', 0))
+            errors = int(suite.get('errors', 0))
+            passed = total_tests - failures - errors
+            tests_passed_str = f'{passed} / {total_tests}'
+            tests_status = '✅' if failures == 0 and errors == 0 else '❌'
+        except (FileNotFoundError, ET.ParseError):
+            tests_passed_str = 'XML not found'
+
+        try:
+            tree = ET.parse('coverage.xml')
+            coverage = float(tree.getroot().get('line-rate')) * 100
+            coverage_str = f'{coverage:.1f}%'
+            cov_status = '✅' if coverage > 80 else ('⚠️' if coverage > 70 else '❌')
+        except (FileNotFoundError, ET.ParseError, TypeError):
+            coverage_str = 'XML not found'
+
+        try:
+            with open('artifacts/metrics.json') as f:
+                metrics = json.load(f)
+            accuracy = metrics.get('accuracy', 0) * 100
+            accuracy_str = f'{accuracy:.2f}%'
+            acc_status = '✅' if accuracy >= 90 else ('⚠️' if accuracy >= 80 else '❌')
+        except (FileNotFoundError, json.JSONDecodeError):
+            accuracy_str = 'JSON not found'
+            
+        # --- Summary Table ---
+        report_parts.append('## 📊 Summary')
+        report_parts.append(f'''
+        | Status | Metric        | Value          |
+        | :----: | :------------ | :------------- |
+        | {tests_status} | Tests Passed  | {tests_passed_str}   |
+        | {cov_status} | Code Coverage | {coverage_str}   |
+        | {acc_status} | Model Accuracy  | {accuracy_str}     |
+        ''')
+        report_parts.append('---')
         
-        if python -c "from main import Config, IrisPipeline; config = Config(data_path='data/iris.csv'); pipeline = IrisPipeline(config); pipeline.run_training_pipeline()"; then
-          echo "✅ **Model training completed successfully**" >> report.md
-          
-          if [ -f "artifacts/metrics.json" ]; then
-            echo "📊 **Performance Metrics:**" >> report.md
-            echo '```json' >> report.md
-            cat artifacts/metrics.json >> report.md
-            echo '```' >> report.md
-          fi
-        else
-          echo "❌ **Model training failed**" >> report.md
-        fi
-        echo "" >> report.md
+        # --- Collapsible Details ---
+        # Test Results
+        report_parts.append('<details><summary>🔬 Unit Test Details</summary>')
+        if tests_status == '✅':
+            report_parts.append(f'\\n✅ **All {total_tests} tests passed successfully!**\\n')
+        else:
+            report_parts.append(f'\\n❌ **{failures} failed, {errors} errors out of {total_tests} tests.** Check the workflow logs for details.\\n')
+        report_parts.append('</details>')
+
+        # Model Training
+        report_parts.append('<details><summary>📈 Model Training & Validation</summary>')
+        try:
+            with open('artifacts/metrics.json') as f:
+                data = json.load(f)
+            table = ['\\n#### Performance Metrics', '| Metric | Value |', '|:---|:---|']
+            for k, v in data.items():
+                table.append(f'| {k.replace(\"_\", \" \").title()} | {v:.4f} |')
+            report_parts.append('\\n'.join(table) + '\\n')
+        except FileNotFoundError:
+            report_parts.append('\\n❌ **Model training failed or metrics file not found.**\\n')
+        report_parts.append('</details>')
+
+        # Data Quality
+        report_parts.append('<details><summary>📋 Data Quality Report</summary>')
+        try:
+            df = pd.read_csv('data/iris.csv')
+            report_parts.append(f'\\n✅ **Data file loaded**: `data/iris.csv`')
+            report_parts.append(f'- **Shape**: {df.shape[0]} rows, {df.shape[1]} columns')
+            report_parts.append('\\n#### Data Preview (first 5 rows)\\n```csv')
+            report_parts.append(df.head().to_csv(index=False))
+            report_parts.append('```\\n')
+        except FileNotFoundError:
+            report_parts.append('\\n❌ **Data file missing**: `data/iris.csv`\\n')
+        report_parts.append('</details>')
+
+        # --- Footer ---
+        report_parts.append('---')
+        report_parts.append(f'_Report generated on {datetime.utcnow().strftime(\"%Y-%m-%d %H:%M:%S UTC\")}_')
         
-    - name: Data validation
-      run: |
-        echo "## Data Quality Report" >> report.md
-        echo "" >> report.md
-        
-        if [ -f "data/iris.csv" ]; then
-          echo "✅ **Data file exists**: \`data/iris.csv\`" >> report.md
-          rows=$(python -c "import pandas as pd; print(len(pd.read_csv('data/iris.csv')))")
-          cols=$(python -c "import pandas as pd; print(len(pd.read_csv('data/iris.csv').columns))")
-          echo "📊 **Dataset shape**: $rows rows, $cols columns" >> report.md
-        else
-          echo "❌ **Data file missing**: \`data/iris.csv\`" >> report.md
-        fi
-        echo "" >> report.md
-        
-    - name: Generate test summary
-      run: |
-        echo "## Summary" >> report.md
-        echo "" >> report.md
-        
-        if [ -f "test-results.xml" ]; then
-          total_tests=$(python -c "import xml.etree.ElementTree as ET; tree = ET.parse('test-results.xml'); print(tree.getroot().get('tests', '0'))")
-          failures=$(python -c "import xml.etree.ElementTree as ET; tree = ET.parse('test-results.xml'); print(tree.getroot().get('failures', '0'))")
-          
-          echo "📈 **Total Tests**: $total_tests" >> report.md
-          echo "❌ **Failed Tests**: $failures" >> report.md
-          
-          if [ "$failures" == "0" ]; then
-            echo "🎉 **All tests are passing!**" >> report.md
-          else
-            echo "⚠️ **Action required**: Fix failing tests" >> report.md
-          fi
-        fi
-        
-        echo "" >> report.md
-        echo "---" >> report.md
-        echo "*Automated report generated by GitHub Actions*" >> report.md
+        with open('report.md', 'w') as f:
+            f.write('\\n\\n'.join(report_parts))
+        "
         
     - name: Publish CML Report
+      if: always()
       env:
         REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        if [ "${{ github.event_name }}" == "pull_request" ]; then
-          # For Pull Requests - comment on the PR
-          cml comment create report.md --target "pr/${{ github.event.pull_request.number }}"
-        elif [ "${{ github.event_name }}" == "push" ]; then
-          # For direct pushes to branches - comment on the commit
-          cml comment create report.md --target "commit/${{ github.sha }}"
-        else
-          # For other events (like manual triggers)
-          cml comment create report.md
-        fi
+        # Creates a comment on the PR or commit.
+        cml comment create report.md
         
     - name: Upload test artifacts
       uses: actions/upload-artifact@v4
@@ -148,6 +182,7 @@ jobs:
       with:
         name: test-results
         path: |
+          report.md
           test-results.xml
           coverage.xml
           artifacts/
