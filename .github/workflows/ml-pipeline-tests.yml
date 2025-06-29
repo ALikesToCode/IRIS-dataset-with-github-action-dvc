@@ -131,7 +131,13 @@ jobs:
       env:
         REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        cml comment create report.md
+        if [[ ! -z "${{ github.event.pull_request.number }}" ]]; then
+          # For Pull Requests
+          cml comment create report.md --target-ref ${{ github.event.pull_request.head.sha }}
+        else
+          # For direct pushes to branches
+          cml comment create report.md
+        fi
         
     - name: Upload test artifacts
       uses: actions/upload-artifact@v4
