@@ -1,0 +1,25 @@
+# Core ML and Data Science Libraries
+pandas>=1.5.0
+numpy>=1.21.0
+scikit-learn>=1.1.0
+joblib>=1.2.0
+
+# Google Cloud and Vertex AI
+google-cloud-aiplatform>=1.30.0
+google-cloud-storage>=2.10.0
+google-auth>=2.22.0
+
+# Data Version Control
+dvc[gs]>=3.0.0
+dvc-data>=2.0.0
+dvc-objects>=1.0.0
+
+# Logging and Configuration
+python-dotenv>=1.0.0
+
+# Development and Testing (optional)
+pytest>=7.0.0
+pytest-cov>=4.0.0
+flake8>=5.0.0
+mypy>=1.0.0
+black>=22.0.0 

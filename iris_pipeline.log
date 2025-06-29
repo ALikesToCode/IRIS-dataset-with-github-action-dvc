@@ -1,0 +1,42 @@
+2025-06-01 18:10:54,397 - __main__ - INFO - Vertex AI client initialized successfully
+2025-06-01 18:10:54,397 - __main__ - INFO - Starting Iris classification training pipeline...
+2025-06-01 18:10:54,400 - __main__ - INFO - Loaded dataset with shape: (150, 5)
+2025-06-01 18:10:54,404 - __main__ - INFO - Training set size: 90
+2025-06-01 18:10:54,404 - __main__ - INFO - Test set size: 60
+2025-06-01 18:10:54,404 - __main__ - INFO - Target classes: ['setosa', 'versicolor', 'virginica']
+2025-06-01 18:10:54,405 - __main__ - INFO - Training Decision Tree classifier...
+2025-06-01 18:10:54,408 - __main__ - INFO - Model training completed successfully
+2025-06-01 18:10:54,417 - __main__ - INFO - Model Evaluation Results:
+2025-06-01 18:10:54,417 - __main__ - INFO -   Accuracy: 0.9833
+2025-06-01 18:10:54,417 - __main__ - INFO -   Precision: 0.9841
+2025-06-01 18:10:54,417 - __main__ - INFO -   Recall: 0.9833
+2025-06-01 18:10:54,417 - __main__ - INFO -   F1_score: 0.9833
+2025-06-01 18:10:54,420 - __main__ - INFO - Model saved to: artifacts/model.joblib
+2025-06-01 18:10:54,420 - __main__ - INFO - Metrics saved to: artifacts/metrics.json
+2025-06-01 18:10:54,420 - __main__ - INFO - Training pipeline completed successfully!
+2025-06-01 18:10:54,420 - __main__ - INFO - Starting deployment pipeline...
+2025-06-01 18:10:56,879 - __main__ - INFO - Bucket gs://iitm-mlops-week-1 already exists
+2025-06-01 18:10:59,475 - __main__ - INFO - Model artifacts uploaded to: gs://iitm-mlops-week-1/my-models/iris-classifier-week-1/
+2025-06-01 18:10:59,475 - __main__ - INFO - Deployment pipeline completed successfully!
+2025-06-01 18:10:59,475 - __main__ - INFO - Pipeline execution completed successfully!
+2025-06-01 18:13:43,273 - __main__ - INFO - Vertex AI client initialized successfully
+2025-06-01 18:13:43,273 - __main__ - INFO - Starting Iris classification training pipeline...
+2025-06-01 18:13:43,276 - __main__ - INFO - Loaded dataset with shape: (109, 5)
+2025-06-01 18:13:43,281 - __main__ - INFO - Training set size: 65
+2025-06-01 18:13:43,281 - __main__ - INFO - Test set size: 44
+2025-06-01 18:13:43,281 - __main__ - INFO - Target classes: ['setosa', 'versicolor', 'virginica']
+2025-06-01 18:13:43,281 - __main__ - INFO - Training Decision Tree classifier...
+2025-06-01 18:13:43,284 - __main__ - INFO - Model training completed successfully
+2025-06-01 18:13:43,293 - __main__ - INFO - Model Evaluation Results:
+2025-06-01 18:13:43,293 - __main__ - INFO -   Accuracy: 0.9773
+2025-06-01 18:13:43,293 - __main__ - INFO -   Precision: 0.9784
+2025-06-01 18:13:43,293 - __main__ - INFO -   Recall: 0.9773
+2025-06-01 18:13:43,293 - __main__ - INFO -   F1_score: 0.9759
+2025-06-01 18:13:43,295 - __main__ - INFO - Model saved to: artifacts/model.joblib
+2025-06-01 18:13:43,296 - __main__ - INFO - Metrics saved to: artifacts/metrics.json
+2025-06-01 18:13:43,296 - __main__ - INFO - Training pipeline completed successfully!
+2025-06-01 18:13:43,296 - __main__ - INFO - Starting deployment pipeline...
+2025-06-01 18:13:45,711 - __main__ - INFO - Bucket gs://iitm-mlops-week-1 already exists
+2025-06-01 18:13:48,255 - __main__ - INFO - Model artifacts uploaded to: gs://iitm-mlops-week-1/my-models/iris-classifier-week-1/
+2025-06-01 18:13:48,255 - __main__ - INFO - Deployment pipeline completed successfully!
+2025-06-01 18:13:48,255 - __main__ - INFO - Pipeline execution completed successfully!

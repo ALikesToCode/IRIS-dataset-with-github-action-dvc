@@ -1,0 +1,6 @@
+[core]
+    remote = gcs-storage
+    autostage = true
+
+['remote "gcs-storage"']
+    url = gs://iitm-mlops-week-1/dvc-storage 

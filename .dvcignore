@@ -1,0 +1,31 @@
+# Add patterns of files dvc should ignore, which could improve
+# the performance. Learn more at
+# https://dvc.org/doc/user-guide/dvcignore
+
+# Ignore Python cache and temporary files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.env
+.venv
+
+# Ignore IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ignore log files
+*.log
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore temporary model files
+*.tmp
+*.temp 
