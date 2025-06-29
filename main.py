@@ -187,7 +187,7 @@ class IrisModelTrainer:
             raise
     
     def save_model(self) -> str:
-        """Save the trained model to disk."""
+        """Save the trained model and test data to disk."""
         if self.model is None:
             raise ValueError("Model not trained yet. Call train_model first.")
         
@@ -196,6 +196,7 @@ class IrisModelTrainer:
             artifacts_path = Path(self.config.artifacts_dir)
             artifacts_path.mkdir(exist_ok=True)
             
+            # Save model
             model_path = artifacts_path / self.config.model_filename
             joblib.dump(self.model, model_path)
             
@@ -211,6 +212,21 @@ class IrisModelTrainer:
             
         except Exception as e:
             logger.error(f"Error saving model: {e}")
+            raise
+
+    def save_test_data(self, X_test: pd.DataFrame, y_test: pd.Series):
+        """Save the test data to disk."""
+        try:
+            artifacts_path = Path(self.config.artifacts_dir)
+            artifacts_path.mkdir(exist_ok=True)
+            
+            X_test.to_csv(artifacts_path / "X_test.csv", index=False)
+            y_test.to_csv(artifacts_path / "y_test.csv", index=False)
+            
+            logger.info("Test data saved to artifacts directory.")
+            
+        except Exception as e:
+            logger.error(f"Error saving test data: {e}")
             raise
 
 
@@ -308,8 +324,9 @@ class IrisPipeline:
             # Evaluate model
             metrics = self.trainer.evaluate_model(X_test, y_test)
             
-            # Save model
+            # Save model and test data
             model_path = self.trainer.save_model()
+            self.trainer.save_test_data(X_test, y_test)
             
             logger.info("Training pipeline completed successfully!")
             return model_path
@@ -349,31 +366,16 @@ class IrisPipeline:
 
 
 def main():
-    """Main entry point."""
+    """Main function to run the full pipeline."""
     try:
-        # Load configuration
-        config = Config.from_env()
-        
-        # Create and run pipeline
-        pipeline = IrisPipeline(config)
-        success = pipeline.run_full_pipeline()
-        
-        if success:
-            logger.info("Pipeline execution completed successfully!")
-            sys.exit(0)
-        else:
-            logger.error("Pipeline execution failed!")
-            sys.exit(1)
-            
-    except KeyboardInterrupt:
-        logger.info("Pipeline execution interrupted by user")
-        sys.exit(130)
+        pipeline = IrisPipeline()
+        pipeline.run_full_pipeline()
     except Exception as e:
-        logger.error(f"Unexpected error: {e}")
+        logger.error(f"Pipeline execution failed: {e}")
         sys.exit(1)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
 
 
