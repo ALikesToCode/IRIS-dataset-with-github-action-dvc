@@ -160,14 +160,4 @@ def generate_report():
         f.write('\n\n'.join(report_parts))
 
 if __name__ == '__main__':
-    # We need to save the test data for the confusion matrix
-    from main import Config, IrisModelTrainer
-    config = Config(data_path='data/iris.csv')
-    trainer = IrisModelTrainer(config)
-    data = trainer.load_data()
-    _, _, X_test, y_test = trainer.prepare_data(data)
-    os.makedirs('artifacts', exist_ok=True)
-    X_test.to_csv('artifacts/X_test.csv', index=False)
-    y_test.to_csv('artifacts/y_test.csv', index=False)
-    
     generate_report() 
