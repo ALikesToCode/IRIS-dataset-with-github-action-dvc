@@ -76,7 +76,7 @@ jobs:
 
         # --- Header ---
         report_parts.append('# 🚀 ML Pipeline Report')
-        report_parts.append(f'A summary of the test, validation, and performance results. [View Workflow Run]({os.environ[\"GH_WORKFLOW_URL\"]})')
+        report_parts.append(f'A summary of the test, validation, and performance results. [View Workflow Run]({os.environ["GH_WORKFLOW_URL"]})')
         report_parts.append('---')
 
         # --- Metrics Extraction ---
@@ -129,9 +129,9 @@ jobs:
         # Test Results
         report_parts.append('<details><summary>🔬 Unit Test Details</summary>')
         if tests_status == '✅':
-            report_parts.append(f'\\n✅ **All {total_tests} tests passed successfully!**\\n')
+            report_parts.append(f'\n✅ **All {total_tests} tests passed successfully!**\n')
         else:
-            report_parts.append(f'\\n❌ **{failures} failed, {errors} errors out of {total_tests} tests.** Check the workflow logs for details.\\n')
+            report_parts.append(f'\n❌ **{failures} failed, {errors} errors out of {total_tests} tests.** Check the workflow logs for details.\n')
         report_parts.append('</details>')
 
         # Model Training
@@ -139,33 +139,33 @@ jobs:
         try:
             with open('artifacts/metrics.json') as f:
                 data = json.load(f)
-            table = ['\\n#### Performance Metrics', '| Metric | Value |', '|:---|:---|']
+            table = ['\n#### Performance Metrics', '| Metric | Value |', '|:---|:---|']
             for k, v in data.items():
-                table.append(f'| {k.replace(\"_\", \" \").title()} | {v:.4f} |')
-            report_parts.append('\\n'.join(table) + '\\n')
+                table.append(f'| {k.replace("_", " ").title()} | {v:.4f} |')
+            report_parts.append('\n'.join(table) + '\n')
         except FileNotFoundError:
-            report_parts.append('\\n❌ **Model training failed or metrics file not found.**\\n')
+            report_parts.append('\n❌ **Model training failed or metrics file not found.**\n')
         report_parts.append('</details>')
 
         # Data Quality
         report_parts.append('<details><summary>📋 Data Quality Report</summary>')
         try:
             df = pd.read_csv('data/iris.csv')
-            report_parts.append(f'\\n✅ **Data file loaded**: `data/iris.csv`')
+            report_parts.append(f'\n✅ **Data file loaded**: `data/iris.csv`')
             report_parts.append(f'- **Shape**: {df.shape[0]} rows, {df.shape[1]} columns')
-            report_parts.append('\\n#### Data Preview (first 5 rows)\\n```csv')
+            report_parts.append('\n#### Data Preview (first 5 rows)\n```csv')
             report_parts.append(df.head().to_csv(index=False))
-            report_parts.append('```\\n')
+            report_parts.append('```\n')
         except FileNotFoundError:
-            report_parts.append('\\n❌ **Data file missing**: `data/iris.csv`\\n')
+            report_parts.append('\n❌ **Data file missing**: `data/iris.csv`\n')
         report_parts.append('</details>')
 
         # --- Footer ---
         report_parts.append('---')
-        report_parts.append(f'_Report generated on {datetime.utcnow().strftime(\"%Y-%m-%d %H:%M:%S UTC\")}_')
+        report_parts.append(f'_Report generated on {datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")}_')
         
         with open('report.md', 'w') as f:
-            f.write('\\n\\n'.join(report_parts))
+            f.write('\n\n'.join(report_parts))
         "
         
     - name: Publish CML Report
