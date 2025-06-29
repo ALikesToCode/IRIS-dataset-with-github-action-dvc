@@ -40,6 +40,11 @@ jobs:
         pip install -r requirements.txt
         pip install pytest pytest-cov pytest-xdist coverage[toml]
         
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+        
     - name: Pull DVC data
       run: |
         dvc pull --force
