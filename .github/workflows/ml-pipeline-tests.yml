@@ -133,10 +133,10 @@ jobs:
       run: |
         if [ "${{ github.event_name }}" == "pull_request" ]; then
           # For Pull Requests - comment on the PR
-          cml comment create report.md --target-ref ${{ github.event.pull_request.head.sha }}
+          cml comment create report.md --target "pr/${{ github.event.pull_request.number }}"
         elif [ "${{ github.event_name }}" == "push" ]; then
           # For direct pushes to branches - comment on the commit
-          cml comment create report.md --target-ref ${{ github.sha }}
+          cml comment create report.md --target "commit/${{ github.sha }}"
         else
           # For other events (like manual triggers)
           cml comment create report.md
