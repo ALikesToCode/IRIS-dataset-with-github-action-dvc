@@ -3,16 +3,9 @@ name: ML Pipeline Tests with CML Report
 on:
   push:
     branches: [ main, dev ]
-    paths:
-      - 'week-4/**'
   pull_request:
     branches: [ main ]
-    paths:
-      - 'week-4/**'
   workflow_dispatch:
-
-env:
-  WORKING_DIR: week-4
 
 jobs:
   test-ml-pipeline:
@@ -42,7 +35,6 @@ jobs:
           ${{ runner.os }}-pip-
           
     - name: Install dependencies
-      working-directory: ${{ env.WORKING_DIR }}
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
@@ -52,7 +44,6 @@ jobs:
       uses: iterative/setup-cml@v1
       
     - name: Run unit tests with coverage
-      working-directory: ${{ env.WORKING_DIR }}
       run: |
         echo "# ML Pipeline Test Report" > report.md
         echo "" >> report.md
@@ -71,7 +62,6 @@ jobs:
         echo "" >> report.md
         
     - name: Run model training validation
-      working-directory: ${{ env.WORKING_DIR }}
       run: |
         echo "## Model Training Validation" >> report.md
         echo "" >> report.md
@@ -91,7 +81,6 @@ jobs:
         echo "" >> report.md
         
     - name: Data validation
-      working-directory: ${{ env.WORKING_DIR }}
       run: |
         echo "## Data Quality Report" >> report.md
         echo "" >> report.md
@@ -107,7 +96,6 @@ jobs:
         echo "" >> report.md
         
     - name: Generate test summary
-      working-directory: ${{ env.WORKING_DIR }}
       run: |
         echo "## Summary" >> report.md
         echo "" >> report.md
@@ -133,7 +121,6 @@ jobs:
     - name: Publish CML Report
       env:
         REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      working-directory: ${{ env.WORKING_DIR }}
       run: |
         cml comment create report.md
         
@@ -143,7 +130,7 @@ jobs:
       with:
         name: test-results
         path: |
-          week-4/test-results.xml
-          week-4/coverage.xml
-          week-4/artifacts/
+          test-results.xml
+          coverage.xml
+          artifacts/
         retention-days: 30 
